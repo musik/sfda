@@ -1,5 +1,6 @@
 require "sfda/version"
+require "sfda/guoyao"
 
 module Sfda
-  # Your code goes here...
+  class MethodRequired             < StandardError; end
 end
