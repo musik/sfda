@@ -25,15 +25,10 @@ module Sfda
       end
     end
     def run opts = {}
-      #storage = Sfda::Redis.new(
-        #key_prefix: (opts[:key_prefix] || key_prefix),
-        #resume: (opts[:resume] || false),
-        #clear: opts[:resume] ? false : true ,
-      #)
       defaults = {
         #pages_queue_limit: 10000,
         #links_limit: 10,
-        skip_query_strings: true,
+        #skip_query_strings: true,
         #discard_page_bodies: true,
         user_agent: "Mozilla/5.0 (compatible; Baiduspider/2.0; +http://www.baidu.com/search/spider.html",
         #storage: storage
@@ -42,12 +37,10 @@ module Sfda
       opts = defaults.merge opts
       max_pages = opts.delete(:max_pages) || 9999999
       num_pages = 0
-      #urls = storage.urls.empty? ? root :  storage.urls
       Anemone.crawl(root,opts) do |anemone|
         anemone.on_every_page do |page|
           num_pages += 1
-          page.data[:word] = word(page)
-          p page.data[:word] if opts[:verbose]
+          parse_page page
           anemone.stop_crawl if num_pages > max_pages
         end
         anemone.focus_crawl do |page|
@@ -55,14 +48,36 @@ module Sfda
         end
       end
     end
-    def filter_links links
-      links
+    def table_id
+      raise Sfda::MethodRequired, "table id method required"
     end
-    def word page
-      raise Sfda::MethodRequired, "word method required"
+    def filter_links page
+      @links = []
+      if page.url.to_s.match(/search.jsp/)
+        page.doc.search("//a[@href]").each do |a|
+          u = a['href']
+          u = u.match(/'(content.jsp\?tableId=.+)'/)
+          next if u.nil?
+          abs = page.to_absolute(u[1]) rescue next
+          @links << abs if page.in_domain?(abs)
+        end
+        pages = total_pages(page)
+        if pages > 1
+          1.upto(pages) do |p|
+            #pp root + "&curstart=#{p}"
+          end
+        end
+      end
+      @links
+    end
+    def total_pages(page)
+      page.body.scan(/devPage\((\d+)\)/).flatten.last.to_i rescue 0
+    end
+    def parse_page page
+      raise Sfda::MethodRequired, "parse_page method required"
     end
     def root
-      raise Sfda::MethodRequired, "root method required"
+      'http://app1.sfda.gov.cn/datasearch/face3/search.jsp?tableId=' + table_id.to_s
     end
     def key_prefix
       raise Sfda::MethodRequired, "key_prefix method required"
