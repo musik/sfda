@@ -63,17 +63,22 @@ module Sfda
           abs = page.to_absolute(u[1]) rescue next
           @links << abs if page.in_domain?(abs)
         end
-        pages = total_pages(page)
-        if pages > 1
-          1.upto(pages) do |p|
-            #pp root + "&curstart=#{p}"
-          end
-        end
+        i = next_page(page)
+        @links << page.to_absolute(root + "&curstart=#{i}") unless i.nil?
+        # pages = total_pages(page)
+        # if pages > 1
+        #   1.upto(pages) do |p|
+        #     @links << page.to_absolute(root + "&curstart=#{p}")
+        #   end
+        # end
       end
       @links
     end
     def post_to_yaozui data
 
+    end
+    def next_page page
+      page.doc.at_css("img[src='images/dataanniu_07.gif']").attr("onclick").match(/Page\((\d+)\)/)[1].to_i rescue nil
     end
     def total_pages(page)
       page.body.scan(/devPage\((\d+)\)/).flatten.last.to_i rescue 0
