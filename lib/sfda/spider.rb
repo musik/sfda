@@ -40,7 +40,9 @@ module Sfda
       Anemone.crawl(root,opts) do |anemone|
         anemone.on_every_page do |page|
           num_pages += 1
-          parse_page page
+          parse_page page do |data|
+            post_to_yaozui data
+          end
           anemone.stop_crawl if num_pages > max_pages
         end
         anemone.focus_crawl do |page|
@@ -69,6 +71,9 @@ module Sfda
         end
       end
       @links
+    end
+    def post_to_yaozui data
+
     end
     def total_pages(page)
       page.body.scan(/devPage\((\d+)\)/).flatten.last.to_i rescue 0
