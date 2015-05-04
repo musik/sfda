@@ -24,4 +24,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "guard"
   spec.add_development_dependency "guard-rspec"
   spec.add_dependency "anemone"
+  spec.add_dependency "typhoeus"
 end

@@ -12,7 +12,7 @@ module Sfda
       ignores = %w(相关数据库查询 注)
       ignores << ""
       data[:changjia_guojia] = "中国"
-      data[:source_id] = page.url.to_s.match(/Id=(\d+)/)[1].to_i
+      data[:source_id] = page.url.to_s.match(/&Id=(\d+)/)[1].to_i
       keys = {
         "批准文号"=>:wenhao,
          "原批准文号"=>:yuanwenhao,

@@ -1,4 +1,5 @@
 require 'anemone'
+require 'typhoeus'
 module Sfda
   module Extend
     def run opts = {}
@@ -8,21 +9,6 @@ module Sfda
   module Spider
     def self.included(base)
       base.extend Extend
-    end
-    def words opts={}
-      stats = opts[:word_stats] || false
-      storage = Sfda::Redis.new(key_prefix: (opts[:key_prefix] || key_prefix))
-      if stats
-        count = 0
-        storage.each do |url,page|
-          count+=1  unless page.data.nil? or page.data[:word].nil?
-        end
-        puts "total #{count}"
-      else
-        storage.each do |url,page|
-          puts page.data[:word]  unless page.data.nil? or page.data[:word].nil?
-        end
-      end
     end
     def run opts = {}
       defaults = {
@@ -36,12 +22,13 @@ module Sfda
       }
       opts = defaults.merge opts
       max_pages = opts.delete(:max_pages) || 9999999
+      key = opts.delete(:key) 
       num_pages = 0
       Anemone.crawl(root,opts) do |anemone|
         anemone.on_every_page do |page|
           num_pages += 1
           parse_page page do |data|
-            post_to_yaozui data
+            post_to_yaozui data,key
           end
           anemone.stop_crawl if num_pages > max_pages
         end
@@ -65,16 +52,13 @@ module Sfda
         end
         i = next_page(page)
         @links << page.to_absolute(root + "&curstart=#{i}") unless i.nil?
-        # pages = total_pages(page)
-        # if pages > 1
-        #   1.upto(pages) do |p|
-        #     @links << page.to_absolute(root + "&curstart=#{p}")
-        #   end
-        # end
       end
       @links
     end
-    def post_to_yaozui data
+    def post_to_yaozui data,key
+      pp Typhoeus.post("http://www.vcap.me:4006/pihao/ping",body: {data: data,key: key})
+      pp data
+      exit
 
     end
     def next_page page
